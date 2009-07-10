@@ -35,10 +35,10 @@ if [[ -z "$INPUT" || -z "$OUTPUT" || -z "$LENGTH" || -z "$MAXSCALE" ]]; then
 fi
 
 mkfilter --analyze --analyzefactor=0 "$INPUT" \
-    | awk -v 'OFMT=%.15f' \
+    | awk -v 'OFMT=%.15f' -v ms=$MAXSCALE \
         '/^[0-9]/ {
-            if ($2<1/'"$MAXSCALE"') $2=1;
-                else $2=1/($2*'"$MAXSCALE"');
+            if ($2<1/ms) $2=1;
+                else $2=1/($2*ms);
             print $1, $2;
         }' \
     | mkfilter -t custom -C - -l "$LENGTH" -o "$OUTPUT"
