@@ -35,7 +35,7 @@ if [[ -z "$INPUT" || -z "$OUTPUT" || -z "$LENGTH" || -z "$MAXSCALE" ]]; then
 fi
 
 mkfilter --analyze --analyzefactor=0 "$INPUT" \
-    | awk -v 'OFMT=%.15f' -v ms=$MAXSCALE \
+    | awk -v 'OFMT=%.15f' -v "ms=$MAXSCALE" \
         '/^[0-9]/ {
             if ($2<1/ms) $2=1;
                 else $2=1/($2*ms);
