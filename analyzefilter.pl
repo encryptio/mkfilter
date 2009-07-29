@@ -44,8 +44,8 @@ for details.
 The -m option changes the graph mode. The two allowable choices are "magnitude"
 (the default), and "phase".
 
-The -L option sets the first and last phase to be equal to zero by subtracting
-a linear function (removes any linear component)
+The -L option removes a linear phase from the graph by looking at the first
+two phases. It is likely to screw up non-linear phase filter analysis.
 
 EOF
 }
@@ -85,8 +85,8 @@ my @data = map {
         my @lines = grep { $_ =~ /^[\d\.]/ } (`mkfilter --analyze --analyzefactor=\Q$analyzefactor\E \Q$_`);
         die "Couldn't analyze $_, mkfilter exited with status $?" if $?;
         if ( $linearkill ) {
-            my $b =  ($lines[0]  =~ /\s([\d\.eE]+)\s*$/)[0];
-            my $m = (($lines[-1] =~ /\s([\d\.eE]+)\s*$/)[0]-$b)/@lines;
+            my $b =  ($lines[0] =~ /\s([\d\.eE]+)\s*$/)[0];
+            my $m = (($lines[1] =~ /\s([\d\.eE]+)\s*$/)[0]-$b);
             die unless defined $b and defined $m;
             my @newlines = ();
             my $at = 0;
