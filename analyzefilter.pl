@@ -26,7 +26,7 @@ sub HELP_MESSAGE {
 
 Usage:
     analyzefilter [-s WIDTHxHEIGHT] [-f FREQ:[FREQ]] [-p POWER:POWER]
-        [-F analyzefactor] -o output.png [--] input.wav ...
+        [-F analyzefactor] [-m mode] [-L] -o output.png [--] input.wav ...
     analyzefilter -h
 
 analyzefilter graphs an FIR filter's frequency response with gnuplot and
@@ -41,6 +41,12 @@ The -s option allows you to set the pixel size of the output graph.
 The -F option passes the given analyzefactor to mkfilter, see its documentation
 for details.
 
+The -m option changes the graph mode. The two allowable choices are "magnitude"
+(the default), and "phase".
+
+The -L option sets the first and last phase to be equal to zero by subtracting
+a linear function (removes any linear component)
+
 EOF
 }
 
@@ -48,17 +54,23 @@ my $size = '800x400';
 my $analyzefactor = 1;
 my $powerrange = '0.000001:100';
 my $freqrange = '10:';
+my $mode = 'magnitude';
+my $linearkill = 0;
 my $outfile;
 
 my %opts;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
-getopts('hvo:s:F:f:p:', \%opts);
+getopts('hLvo:s:F:f:p:m:', \%opts);
 
 $size = $opts{'s'} if exists $opts{'s'};
 $outfile = $opts{'o'} if exists $opts{'o'};
 $analyzefactor = $opts{'F'} if exists $opts{'F'};
 $powerrange = $opts{'p'} if exists $opts{'p'};
+
 $freqrange = $opts{'f'} if exists $opts{'f'};
+$mode = $opts{'m'} if exists $opts{'m'};
+$linearkill = 1 if exists $opts{'L'};
+
 my @inputs = @ARGV;
 
 if ( exists $opts{'h'} and $opts{'h'} ) {
@@ -67,11 +79,25 @@ if ( exists $opts{'h'} and $opts{'h'} ) {
 
 die "Need an output file. Run with -h for help.\n" if not defined $outfile;
 die "Need input file(s)\n" unless @inputs;
+die "Mode must be either 'magnitude' or 'phase'.\n" unless $mode =~ /^(magnitude|phase)$/;
 
 my @data = map {
-        my $s = join('', `mkfilter --analyze --analyzefactor=\Q$analyzefactor\E \Q$_`);
+        my @lines = grep { $_ =~ /^[\d\.]/ } (`mkfilter --analyze --analyzefactor=\Q$analyzefactor\E \Q$_`);
         die "Couldn't analyze $_, mkfilter exited with status $?" if $?;
-        $s
+        if ( $linearkill ) {
+            my $b =  ($lines[0]  =~ /\s([\d\.eE]+)\s*$/)[0];
+            my $m = (($lines[-1] =~ /\s([\d\.eE]+)\s*$/)[0]-$b)/@lines;
+            die unless defined $b and defined $m;
+            my @newlines = ();
+            my $at = 0;
+            for my $l ( @lines ) {
+                my @f = split /\s+/, $l, 3;
+                $f[2] -= $b + $m*$at;
+                $at++;
+                $l = join("\t", @f)."\n";
+            }
+        }
+        join '', @lines;
     } @inputs;
 
 $size =~ s/x/,/;
@@ -81,15 +107,11 @@ print $gnuplot <<EOF;
 set terminal png notransparent small size $size x040410 x9999cc x444477 xff0000 x00ff00 x0000ff
 set output '$outfile'
 
-set log x
+EOF
+if ( $mode eq "magnitude" ) {
+    print $gnuplot <<EOF;
 set log y
-set grid
-
-set xrange [$freqrange]
 set yrange [$powerrange]
-
-set autoscale xfixmax
-
 set ytics mirror (  "40dB" 100, \\
                     "20dB"  10, \\
                      "0dB"   1, \\
@@ -99,6 +121,17 @@ set ytics mirror (  "40dB" 100, \\
                    "-80dB"   0.0001, \\
                   "-100dB"   0.00001, \\
                   "-120dB"   0.000001)
+EOF
+}
+print $gnuplot <<EOF;
+
+set log x
+set grid
+
+set xrange [$freqrange]
+
+set autoscale xfixmax
+
 set xtics ( \\
               "10Hz"    10, \\
               "20Hz"    20, \\
@@ -132,7 +165,7 @@ set xtics ( \\
            "20000Hz" 20000)
 EOF
 
-my $plotcmd = "plot " . join(", ", map "'-' with lines title \"$_\"", @inputs);
+my $plotcmd = "plot " . join(", ", map "'-' using ".($mode eq "magnitude" ? "1:2" : "1:3")." with lines title \"$_\"", @inputs);
 print $gnuplot "$plotcmd\n";
 
 for my $d ( @data ) {
