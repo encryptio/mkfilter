@@ -170,8 +170,19 @@ sub print_gnuplot {
     my $fft = dofft_polar($tofft);
 
     print "# frequency magnitude phase\n\n";
+    my $lastphase = 0;
+    my $runningphase = 0;
     for my $i ( 0 .. $#$fft/2 ) {
-        print +($sr*$i/@$fft)."\t".$fft->[$i*2]."\t".$fft->[$i*2+1]."\n";
+        my ($f, $mag, $phase) = ($sr*$i/@$fft, $fft->[$i*2], $fft->[$i*2+1]);
+
+        # unwrap phase
+        my $phasediff = $phase - $lastphase;
+        $phasediff -= pi2 while $phasediff > +pi();
+        $phasediff += pi2 while $phasediff < -pi();
+        $runningphase += $phasediff;
+        $lastphase = $phase;
+
+        print "$f\t$mag\t$runningphase\n";
     }
 }
 
