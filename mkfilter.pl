@@ -169,6 +169,7 @@ sub print_gnuplot {
 
     my $fft = dofft_polar($tofft);
 
+    print "# SAMPLERATE=$sr\n";
     print "# frequency magnitude phase\n\n";
     my $lastphase = 0;
     my $runningphase = 0;
@@ -328,8 +329,13 @@ sub read_curve_from {
 sub read_curve_string {
     my ($str) = @_;
 
+    my $samplerate;
+
     my $curve = [];
     for my $line ( grep { defined and length } split /[\n\r,]/, $str ) {
+        if ( $line =~ /SAMPLERATE=(\d+)/ ) {
+            $samplerate = $1;
+        }
         next if $line =~ /^[#;]/;
         $line =~ s/^\s*//;
         $line =~ s/\s*$//;
@@ -339,7 +345,7 @@ sub read_curve_string {
         push @$curve, [$freq, $power];
     }
 
-    return $curve;
+    return ($curve, $samplerate);
 }
 
 sub make_wantcurve {
@@ -602,9 +608,11 @@ while ( @ARGV ) {
     } elsif ( $arg eq "-w" ) {
         $window = shift @ARGV;
     } elsif ( $arg eq "-c" ) {
-        $wantpoints = read_curve_string(shift @ARGV);
+        ($wantpoints, my $newsamplerate) = read_curve_string(shift @ARGV);
+        $samplerate = $newsamplerate if defined $newsamplerate;
     } elsif ( $arg eq "-C" ) {
-        $wantpoints = read_curve_from(shift @ARGV);
+        ($wantpoints, my $newsamplerate) = read_curve_from(shift @ARGV);
+        $samplerate = $newsamplerate if defined $newsamplerate;
     } elsif ( $arg eq "-h" or $arg eq "--help" ) {
         help; exit 0;
     } elsif ( -f $arg and not @ARGV and $printanalysis and not $outfile ) {

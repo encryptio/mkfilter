@@ -40,6 +40,9 @@ mkfilter --analyze --analyzefactor=0 "$INPUT" \
             if ($2<1/ms) $2=1;
                 else $2=1/($2*ms);
             print $1, $2;
+        }
+        /^#/ {
+            print $0;
         }' \
     | mkfilter -t custom -C - -l "$LENGTH" -o "$OUTPUT"
 
