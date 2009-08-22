@@ -18,31 +18,48 @@ INPUT="$1"
 OUTPUT="$2"
 LENGTH="$3"
 MAXSCALE="$4"
+SMOOTHSIZE="$5"
 
-if [[ -z "$INPUT" || -z "$OUTPUT" || -z "$LENGTH" || -z "$MAXSCALE" ]]; then
+
+if [[ -z "$INPUT" || -z "$OUTPUT" || -z "$LENGTH" ]]; then
     echo
     echo 'Usage:'
-    echo '    mkunfilter input output filterlength maxscale'
+    echo '    mkunfilter input output filterlength [maxscale [smoothsize]]'
     echo
     echo 'mkunfilter creates an approximation to a spectral inversion of any filter given'
     echo 'as input. The maxscale argument gives the maximum amplitude boost (as a multi-'
-    echo 'plicative factor) that any given frequency will be multiplied by. The final'
-    echo 'filter will be scaled such that no frequency is boosted, only attenuated.'
+    echo 'plicative factor) that any given frequency will be multiplied by. It defaults to'
+    echo '1 if not given. The final filter will be scaled such that no frequency is'
+    echo 'boosted, only attenuated.'
+    echo
+    echo 'The smoothsize argument is passed as the number of octaves wide to smooth in'
+    echo 'smoothresponse. If not given, does not smooth.'
     echo
     echo 'mkunfilter ignores phase.'
     echo
     exit 1
 fi
 
-mkfilter --analyze --analyzefactor=0 "$INPUT" \
-    | awk -v 'OFMT=%.15f' -v "ms=$MAXSCALE" \
-        '/^[0-9]/ {
+if [[ -z "$MAXSCALE" ]]; then
+    MAXSCALE=1
+fi
+
+if [[ -z "$SMOOTHSIZE" ]]; then
+    SMOOTHPROGRAM=""
+else
+    SMOOTHPROGRAM='|smoothresponse -w "$SMOOTHSIZE"'
+fi
+
+eval 'mkfilter --analyze --analyzefactor=0 "$INPUT" \
+    | awk -v '\''OFMT=%.15f'\'' -v "ms=$MAXSCALE" \
+        '\''/^[0-9]/ {
             if ($2<1/ms) $2=1;
                 else $2=1/($2*ms);
             print $1, $2;
         }
         /^#/ {
             print $0;
-        }' \
-    | mkfilter -t custom -C - -l "$LENGTH" -o "$OUTPUT"
+        }'\'' \
+    '"$SMOOTHPROGRAM"' \
+    | mkfilter -t custom -C - -l "$LENGTH" -o "$OUTPUT"'
 

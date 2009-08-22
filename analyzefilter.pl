@@ -26,7 +26,8 @@ sub HELP_MESSAGE {
 
 Usage:
     analyzefilter [-s WIDTHxHEIGHT] [-f FREQ:[FREQ]] [-p POWER:POWER]
-        [-F analyzefactor] [-m mode] [-L] -o output.png [--] input.wav ...
+        [-F analyzefactor] [-m mode] [-L] [-w smoothwidth]
+        -o output.png [--] input.wav ...
     analyzefilter -h
 
 analyzefilter graphs an FIR filter's frequency response with gnuplot and
@@ -47,6 +48,9 @@ The -m option changes the graph mode. The two allowable choices are "magnitude"
 The -L option removes a linear phase from the graph by looking at the first
 two phases. It is likely to screw up non-linear phase filter analysis.
 
+The -w option runs the response through smoothresponse with the given width
+before drawing. It is incompatible with phase mode.
+
 EOF
 }
 
@@ -56,16 +60,18 @@ my $powerrange = '0.000001:100';
 my $freqrange = '10:';
 my $mode = 'magnitude';
 my $linearkill = 0;
+my $smooth;
 my $outfile;
 
 my %opts;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
-getopts('hLvo:s:F:f:p:m:', \%opts);
+getopts('hLvo:s:F:f:p:m:w:', \%opts);
 
 $size = $opts{'s'} if exists $opts{'s'};
 $outfile = $opts{'o'} if exists $opts{'o'};
 $analyzefactor = $opts{'F'} if exists $opts{'F'};
 $powerrange = $opts{'p'} if exists $opts{'p'};
+$smooth = $opts{'w'} if exists $opts{'w'};
 
 $freqrange = $opts{'f'} if exists $opts{'f'};
 $mode = $opts{'m'} if exists $opts{'m'};
@@ -80,9 +86,11 @@ if ( exists $opts{'h'} and $opts{'h'} ) {
 die "Need an output file. Run with -h for help.\n" if not defined $outfile;
 die "Need input file(s)\n" unless @inputs;
 die "Mode must be either 'magnitude' or 'phase'.\n" unless $mode =~ /^(magnitude|phase)$/;
+die "Phase mode is incompatible with smoothing.\n" if $mode eq 'phase' and $smooth;
 
 my @data = map {
-        my @lines = grep { $_ =~ /^[\d\.]/ } (`mkfilter --analyze --analyzefactor=\Q$analyzefactor\E \Q$_`);
+        my $smoothpipe = $smooth ? "| smoothresponse -w \Q$smooth\E" : "";
+        my @lines = grep { $_ =~ /^[\d\.]/ } (`mkfilter --analyze --analyzefactor=\Q$analyzefactor\E \Q$_\E $smoothpipe`);
         die "Couldn't analyze $_, mkfilter exited with status $?" if $?;
         if ( $linearkill ) {
             my $b =  ($lines[0] =~ /\s([\d\.eE]+)\s*$/)[0];
