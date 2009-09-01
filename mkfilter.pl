@@ -339,7 +339,7 @@ sub read_curve_string {
         next if $line =~ /^[#;]/;
         $line =~ s/^\s*//;
         $line =~ s/\s*$//;
-        my ($freq, $power) = split /[=\s]+/, $line, 2;
+        my ($freq, $power) = split /[=\s]+/, $line;
         next unless $freq  =~ /^\+?\d*(?:\.\d*)?(?:[eE][-+]?\d+)?$/;
         next unless $power =~ /^\+?\d*(?:\.\d*)?(?:[eE][-+]?\d+)?$/;
         push @$curve, [$freq, $power];
