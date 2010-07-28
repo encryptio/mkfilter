@@ -1,6 +1,8 @@
 
 CFLAGS += -O2 -Wall -g -std=c99 -pipe
 
+CFLAGS += -D_BSD_SOURCE
+
 CFLAGS += `pkg-config --cflags sndfile`
 LIBS += `pkg-config --libs sndfile`
 
