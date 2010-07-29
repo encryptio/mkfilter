@@ -129,9 +129,13 @@ audiobuf *make_custom(int sr, wantcurve *curve, int len, enum window window) {
         in[i].i = 0;
 
     int pti = 0;
+    bool forward = true;
     for (int i = 0; i < fftsize; i++) {
         float f = (float)i/fftsize*sr;
-        if ( f > sr/2 ) f = sr-f;
+        if ( f > sr/2 ) {
+            f = sr-f;
+            forward = false;
+        }
 
         if ( f < curve->pts[0].freq ) {
             // before the first point
@@ -142,7 +146,10 @@ audiobuf *make_custom(int sr, wantcurve *curve, int len, enum window window) {
         } else {
             // in-between points
 
-            while ( curve->pts[pti+1].freq < f ) pti++;
+            if ( forward )
+                while ( curve->pts[pti+1].freq < f ) pti++;
+            else
+                while ( curve->pts[pti].freq > f ) pti--;
             //           pts[pti  ] is the point immediately to the left  of f
             // likewise, pts[pti+1] is the point immediately to the right of f
 
