@@ -17,7 +17,7 @@
 
 #include "make.h"
 
-#include "kissfft/kiss_fftr.h"
+#include "../kissfft/kiss_fftr.h"
 
 #include <math.h>
 #include <err.h>

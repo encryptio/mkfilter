@@ -16,7 +16,7 @@
  */
 
 #include "audiobuf.h"
-#include "kissfft/kiss_fftr.h"
+#include "../kissfft/kiss_fftr.h"
 
 #include <err.h>
 #include <string.h>
