@@ -59,6 +59,14 @@ wantcurve *read_wantcurve_from_file(FILE *fh) {
     return ret;
 }
 
+static int compare_wantpoint(const void *a, const void *b) {
+    float fa = ((wantpoint*)a)->freq;
+    float fb = ((wantpoint*)b)->freq;
+    if ( fa > fb ) return  1;
+    if ( fa < fb ) return -1;
+    return 0;
+}
+
 wantcurve *read_wantcurve_from_string(char *str) {
     char *s = str;
     char *end = str+strlen(str);
@@ -130,16 +138,7 @@ wantcurve *read_wantcurve_from_string(char *str) {
         ret->ct++;
     }
 
-    // insertion sort by frequency
-    for (int i = 1; i < ret->ct; i++) {
-        int j = i;
-        wantpoint this = ret->pts[i];
-        while ( j > 0 && ret->pts[j-1].freq > this.freq ) {
-            j--;
-            ret->pts[j+1] = ret->pts[j];
-        }
-        ret->pts[j] = this;
-    }
+    qsort(ret->pts, ret->ct, sizeof(wantpoint), compare_wantpoint);
 
     if ( ret->ct == 0 )
         errx(1, "Wantcurve appears to be empty.");
