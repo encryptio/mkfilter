@@ -30,7 +30,7 @@ void convert_buf(audiobuf *buf, enum audiobuf_type target) {
 
         if ( buf->fd == NULL )
             if ( (buf->fd = malloc(sizeof(float)*(buf->len/2+1)*2)) == NULL )
-                err(1, "Couldn't allocate %d bytes for frequency domain samples", sizeof(float)*(buf->len/2+1)*2);
+                err(1, "Couldn't allocate %zu bytes for frequency domain samples", sizeof(float)*(buf->len/2+1)*2);
 
         kiss_fftr_cfg cfg = kiss_fftr_alloc(buf->len, 0, NULL, NULL);
         kiss_fftr(cfg, buf->td, (kiss_fft_cpx*) buf->fd);
@@ -40,7 +40,7 @@ void convert_buf(audiobuf *buf, enum audiobuf_type target) {
     } else if ( target == audiobuf_td ) {
         if ( buf->td == NULL )
             if ( (buf->td = malloc(sizeof(float)*buf->len)) == NULL )
-                err(1, "Couldn't allocate %d bytes for time domain samples", sizeof(float)*buf->len);
+                err(1, "Couldn't allocate %zu bytes for time domain samples", sizeof(float)*buf->len);
 
         kiss_fftr_cfg cfg = kiss_fftr_alloc(buf->len, 1, NULL, NULL);
         kiss_fftri(cfg, (kiss_fft_cpx*) buf->fd, buf->td);
@@ -60,7 +60,7 @@ void expand_buf(audiobuf *buf, int minsize) {
 
     if ( newsize > oldsize ) {
         if ( (buf->td = realloc(buf->td, sizeof(float)*newsize)) == NULL )
-            err(1, "Couldn't realloc %d bytes for expanded time domain samples", sizeof(float)*newsize);
+            err(1, "Couldn't realloc %zu bytes for expanded time domain samples", sizeof(float)*newsize);
 
         for (int i = oldsize; i < newsize; i++)
             buf->td[i] = 0;
@@ -79,7 +79,7 @@ audiobuf *duplicate_buf(audiobuf *buf) {
     memcpy(new, buf, sizeof(audiobuf));
     
     if ( (new->td = malloc(sizeof(float)*new->len)) == NULL )
-        err(1, "Couldn't allocate %d bytes for time domain samples", sizeof(float)*new->len);
+        err(1, "Couldn't allocate %zu bytes for time domain samples", sizeof(float)*new->len);
 
     memcpy(new->td, buf->td, new->len*sizeof(float));
     new->fd = NULL;

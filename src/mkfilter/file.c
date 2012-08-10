@@ -44,7 +44,7 @@ audiobuf *read_file(char *path) {
     buf->type = audiobuf_td;
 
     if ( (buf->td = malloc(sizeof(float)*buf->len)) == NULL )
-        err(1, "Couldn't malloc %d bytes for input buffer for %s", sizeof(float)*buf->len, path);
+        err(1, "Couldn't malloc %zu bytes for input buffer for %s", sizeof(float)*buf->len, path);
 
     sf_readf_float(sf, buf->td, buf->len);
     

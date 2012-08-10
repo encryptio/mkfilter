@@ -70,7 +70,7 @@ audiobuf *make_sinc(int sr, float freq, int size) {
     if ( (buf = malloc(sizeof(audiobuf))) == NULL )
         err(1, "Couldn't allocate space for audiobuf struct");
     if ( (buf->td = malloc(sizeof(float)*size)) == NULL )
-        err(1, "Couldn't allocate %d bytes for time domain samples", sizeof(float)*size);
+        err(1, "Couldn't allocate %zu bytes for time domain samples", sizeof(float)*size);
     buf->fd = NULL;
     buf->len = size;
     buf->type = audiobuf_td;
@@ -136,15 +136,15 @@ audiobuf *convolve(audiobuf *a, audiobuf *b) {
 
     float *samp;
     if ( (samp = malloc(sizeof(float)*fftsize)) == NULL )
-        err(1, "Couldn't allocate %d bytes for fft in convolution", sizeof(float)*fftsize);
+        err(1, "Couldn't allocate %zu bytes for fft in convolution", sizeof(float)*fftsize);
 
     kiss_fft_cpx *afft;
     kiss_fft_cpx *bfft;
 
     if ( (afft = malloc(sizeof(kiss_fft_cpx)*(fftsize+1))) == NULL )
-        err(1, "Couldn't allocate %d bytes for ffta in convolution", sizeof(kiss_fft_cpx)*(fftsize/2+1));
+        err(1, "Couldn't allocate %zu bytes for ffta in convolution", sizeof(kiss_fft_cpx)*(fftsize/2+1));
     if ( (bfft = malloc(sizeof(kiss_fft_cpx)*(fftsize+1))) == NULL )
-        err(1, "Couldn't allocate %d bytes for fftb in convolution", sizeof(kiss_fft_cpx)*(fftsize/2+1));
+        err(1, "Couldn't allocate %zu bytes for fftb in convolution", sizeof(kiss_fft_cpx)*(fftsize/2+1));
 
     kiss_fftr_cfg cfg = kiss_fftr_alloc(fftsize, 0, NULL, NULL);
 
