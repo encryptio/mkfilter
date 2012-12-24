@@ -6,6 +6,8 @@ CFLAGS += -D_BSD_SOURCE
 CFLAGS += `pkg-config --cflags sndfile`
 LIBS += `pkg-config --libs sndfile`
 
+LIBS += -lm
+
 KISSFFT_OBJECTS = src/kissfft/kiss_fft.o src/kissfft/kiss_fftr.o
 MKFILTER_OBJECTS = src/mkfilter/audiobuf.o src/mkfilter/make.o src/mkfilter/file.o src/mkfilter/main.o src/mkfilter/tools.o src/mkfilter/analyze.o src/mkfilter/wantcurve.o
 SMOOTHRESPONSE_OBJECTS = src/smoothresponse.o
